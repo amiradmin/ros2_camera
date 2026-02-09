@@ -2,27 +2,20 @@ services:
   ros2:
     build: .
     container_name: ros2_web_dev
+    restart: unless-stopped
     tty: true
     stdin_open: true
-    restart: unless-stopped
-
-    # Run container as root to access /dev/video0
-    user: root
 
     ports:
-      - "8081:8081"
-      - "8082:8082"
-      - "8083:22"
+      - "8081:8081"  # noVNC
+      - "8082:8082"  # code-server
 
     volumes:
-      - ./src:/home/aicrobo/ros2_ws/src      # Sync local src folder
-      - /tmp/.X11-unix:/tmp/.X11-unix        # For GUI apps (RViz, rqt)
-      - ${HOME}/.ros:/home/aicrobo/.ros      # Persist ROS logs/config
+      - ./src:/home/aicrobo/ros2_ws/src
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
 
     devices:
-      - /dev/video0:/dev/video0              # Map your webcam
+      - /dev/video0:/dev/video0
 
-    network_mode: host
-
-    # Optional: increase shared memory for OpenCV/RViz if needed
-    shm_size: '1gb'
+    privileged: true
+    shm_size: '2gb'
