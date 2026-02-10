@@ -1,19 +1,45 @@
 FROM yuanboshe/ros-humble-aicrobo:latest
 
-# Install camera dependencies as root
+# -----------------------------
+# Install system dependencies
+# -----------------------------
 USER root
+
 RUN apt-get update && apt-get install -y \
     v4l-utils \
     libv4l-dev \
     python3-opencv \
+    python3-pip \
+    wget \
     && rm -rf /var/lib/apt/lists/*
+
+# Allow camera access
 RUN usermod -a -G video aicrobo
+
+# -----------------------------
+# Download MediaPipe Model
+# -----------------------------
+RUN wget https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/latest/hand_landmarker.task \
+    -O /tmp/hand_landmarker.task
+
 USER aicrobo
 
-# Set working directory
+# -----------------------------
+# Workspace Setup
+# -----------------------------
 WORKDIR /home/aicrobo/ros2_ws
 
-# Add ROS setup to bashrc
+# Install Python dependencies
+COPY --chown=aicrobo:aicrobo requirements.txt /tmp/requirements.txt
+
+RUN if [ -f /tmp/requirements.txt ]; then \
+        pip3 install --no-cache-dir -r /tmp/requirements.txt; \
+        rm /tmp/requirements.txt; \
+    fi
+
+# -----------------------------
+# ROS Environment Setup
+# -----------------------------
 RUN echo '' >> ~/.bashrc && \
     echo '# ROS 2 Workspace Setup' >> ~/.bashrc && \
     echo 'source /opt/ros/humble/setup.bash' >> ~/.bashrc && \
