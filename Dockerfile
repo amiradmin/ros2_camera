@@ -33,10 +33,11 @@ WORKDIR /home/aicrobo/ros2_ws
 COPY --chown=aicrobo:aicrobo requirements.txt /tmp/requirements.txt
 
 RUN if [ -f /tmp/requirements.txt ]; then \
-        pip3 install --no-cache-dir -r /tmp/requirements.txt; \
+        pip install --no-cache-dir -r /tmp/requirements.txt; \
         rm /tmp/requirements.txt; \
     fi
-
+RUN pip install mediapipe
+RUN pip install --force-reinstall "numpy==1.24.3"
 # -----------------------------
 # ROS Environment Setup
 # -----------------------------

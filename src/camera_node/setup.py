@@ -23,6 +23,7 @@ setup(
             'camera_publisher = camera_node.camera_publisher:main',
             'camera_viewer = camera_node.camera_viewer:main',
             'gesture_detector = camera_node.gesture_detector:main',
+            'gesture_to_arduino = camera_node.gesture_to_arduino:main',
         ],
     },
 )

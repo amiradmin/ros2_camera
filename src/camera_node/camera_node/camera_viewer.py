@@ -12,19 +12,17 @@ class CameraViewer(Node):
         super().__init__('camera_viewer')
 
         self.bridge = CvBridge()
-
-        # Store latest finger number
         self.finger_number = 0
 
-        # Image subscriber
+        # ✅ Subscribe to annotated image instead of raw camera
         self.subscription = self.create_subscription(
             Image,
-            'camera/image_raw',
+            'gesture/image_annotated',
             self.image_callback,
             10
         )
 
-        # Gesture subscriber
+        # Finger number subscriber
         self.gesture_sub = self.create_subscription(
             Int32,
             'gesture/number',
@@ -34,19 +32,20 @@ class CameraViewer(Node):
 
         self.get_logger().info("Camera Viewer Started")
 
-    # ----------------------------
+    # --------------------------------
     def gesture_callback(self, msg):
         self.finger_number = msg.data
 
-    # ----------------------------
+    # --------------------------------
     def image_callback(self, msg):
-        frame = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
 
-        # Draw finger number on frame
+        frame = self.bridge.imgmsg_to_cv2(msg, 'bgr8')
+
+        # Draw finger count overlay
         cv2.putText(
             frame,
             f"Fingers: {self.finger_number}",
-            (50, 50),
+            (30, 40),
             cv2.FONT_HERSHEY_SIMPLEX,
             1,
             (0, 255, 0),

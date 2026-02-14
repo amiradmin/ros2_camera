@@ -16,6 +16,7 @@ services:
 
     devices:
       - /dev/video0:/dev/video0
+      - /dev/ttyUSB0:/dev/ttyUSB0
 
     privileged: true
     shm_size: '2gb'
