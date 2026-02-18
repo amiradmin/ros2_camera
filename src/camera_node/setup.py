@@ -14,8 +14,8 @@ setup(
     ],
     install_requires=['setuptools', 'opencv-python', 'cv_bridge', 'mediapipe', 'rclpy'],
     zip_safe=True,
-    maintainer='aicrobo',
-    maintainer_email='aicrobo@todo.todo',
+    maintainer='amir',
+    maintainer_email='amirbehvandi747@gmail.com',
     description='Camera nodes for ROS2',
     license='Apache License 2.0',
     entry_points={

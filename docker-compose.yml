@@ -1,22 +1,29 @@
 services:
   ros2:
-    build: .
+    build:
+      context: .
+      args:
+        - UID=${UID:-1000}
+        - GID=${GID:-1000}
     container_name: ros2_web_dev
     restart: unless-stopped
     tty: true
     stdin_open: true
-
-    ports:
-      - "8081:8081"  # noVNC
-      - "8082:8082"  # code-server
+    network_mode: host
 
     volumes:
-      - ./src:/home/aicrobo/ros2_ws/src
+      - ./src:/workspace/src
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - ~/.Xauthority:/home/amir/.Xauthority:rw  # ADD THIS LINE
 
     devices:
       - /dev/video0:/dev/video0
       - /dev/ttyUSB0:/dev/ttyUSB0
 
     privileged: true
-    shm_size: '2gb'
+
+    environment:
+      - DISPLAY=${DISPLAY}
+      - QT_X11_NO_MITSHM=1
+      - ROS_DOMAIN_ID=0
+      - XAUTHORITY=/home/amir/.Xauthority  # ADD THIS LINE

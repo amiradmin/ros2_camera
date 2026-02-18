@@ -1,17 +1,11 @@
-# ===== Core ROS Vision Compatibility =====
+# Core dependencies
 numpy==1.26.4
 opencv-python==4.8.1.78
-
-# ===== MediaPipe (New Tasks API) =====
 mediapipe==0.10.32
 
-# ===== Optional but Common Vision Utilities =====
-matplotlib==3.7.5
-scipy==1.11.4
-
-# ===== YOLO (Optional but recommended for future expansion) =====
-ultralytics==8.3.0
-
-# ===== ROS Python Utilities =====
-PyYAML
+# Arduino communication (if needed)
 pyserial
+
+# ROS2 build tools
+setuptools
+colcon-common-extensions

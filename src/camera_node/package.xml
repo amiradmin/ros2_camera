@@ -4,7 +4,7 @@
   <name>camera_node</name>
   <version>0.0.0</version>
   <description>TODO: Package description</description>
-  <maintainer email="aicrobo@todo.todo">aicrobo</maintainer>
+  <maintainer email="amirbehvandi747@gmail.com">amir</maintainer>
   <license>TODO: License declaration</license>
 
   <depend>rclpy</depend>

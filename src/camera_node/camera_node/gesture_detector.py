@@ -5,6 +5,7 @@ from std_msgs.msg import Int32
 from cv_bridge import CvBridge
 import cv2
 import mediapipe as mp
+import os
 
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
@@ -14,6 +15,10 @@ class GestureDetector(Node):
 
     def __init__(self):
         super().__init__('gesture_detector')
+
+        # Declare parameter for showing GUI
+        self.declare_parameter('show_gui', False)
+        self.show_gui = self.get_parameter('show_gui').value
 
         self.bridge = CvBridge()
 
@@ -54,6 +59,8 @@ class GestureDetector(Node):
         self.detector = vision.HandLandmarker.create_from_options(options)
 
         self.get_logger().info("Gesture Detector Started")
+        if self.show_gui:
+            self.get_logger().info("GUI windows enabled")
 
     # ---------------------------------------------------
     def count_fingers(self, landmarks):
@@ -136,6 +143,11 @@ class GestureDetector(Node):
         annotated_msg = self.bridge.cv2_to_imgmsg(frame, encoding='bgr8')
         self.image_pub.publish(annotated_msg)
 
+        # Show GUI window if enabled
+        if self.show_gui:
+            cv2.imshow("Gesture Detection", frame)
+            cv2.waitKey(1)
+
 
 # ---------------------------------------------------
 def main(args=None):
@@ -148,6 +160,8 @@ def main(args=None):
     except KeyboardInterrupt:
         pass
     finally:
+        if node.show_gui:
+            cv2.destroyAllWindows()
         node.destroy_node()
         rclpy.shutdown()
 

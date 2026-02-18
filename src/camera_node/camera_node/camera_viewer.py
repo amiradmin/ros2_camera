@@ -1,20 +1,22 @@
+#!/usr/bin/env python3
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import Image
-from std_msgs.msg import Int32
 from cv_bridge import CvBridge
 import cv2
+import numpy as np
 
 
-class CameraViewer(Node):
-
+class ImageViewer(Node):
     def __init__(self):
-        super().__init__('camera_viewer')
-
+        super().__init__('image_viewer')
         self.bridge = CvBridge()
-        self.finger_number = 0
 
-        # ✅ Subscribe to annotated image instead of raw camera
+        # Create a named window with normal size
+        cv2.namedWindow("Gesture Detection", cv2.WINDOW_NORMAL)
+        cv2.resizeWindow("Gesture Detection", 800, 600)
+
+        # Subscribe to annotated images
         self.subscription = self.create_subscription(
             Image,
             'gesture/image_annotated',
@@ -22,51 +24,35 @@ class CameraViewer(Node):
             10
         )
 
-        # Finger number subscriber
-        self.gesture_sub = self.create_subscription(
-            Int32,
-            'gesture/number',
-            self.gesture_callback,
-            10
-        )
+        self.get_logger().info("✅ Image Viewer Started - waiting for images...")
 
-        self.get_logger().info("Camera Viewer Started")
-
-    # --------------------------------
-    def gesture_callback(self, msg):
-        self.finger_number = msg.data
-
-    # --------------------------------
     def image_callback(self, msg):
+        try:
+            # Convert ROS Image to OpenCV image
+            frame = self.bridge.imgmsg_to_cv2(msg, 'bgr8')
 
-        frame = self.bridge.imgmsg_to_cv2(msg, 'bgr8')
+            # Show the frame
+            cv2.imshow("Gesture Detection", frame)
+            cv2.waitKey(1)  # 1ms delay, allows window to update
 
-        # Draw finger count overlay
-        cv2.putText(
-            frame,
-            f"Fingers: {self.finger_number}",
-            (30, 40),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            1,
-            (0, 255, 0),
-            2
-        )
+        except Exception as e:
+            self.get_logger().error(f"Error processing image: {e}")
 
-        cv2.imshow("Camera Viewer", frame)
-        cv2.waitKey(1)
+    def cleanup(self):
+        cv2.destroyAllWindows()
+        self.get_logger().info("Cleaned up windows")
 
 
 def main(args=None):
     rclpy.init(args=args)
-
-    node = CameraViewer()
+    node = ImageViewer()
 
     try:
         rclpy.spin(node)
     except KeyboardInterrupt:
-        pass
+        node.get_logger().info("Shutting down...")
     finally:
-        cv2.destroyAllWindows()
+        node.cleanup()
         node.destroy_node()
         rclpy.shutdown()
 

@@ -1,50 +1,62 @@
-FROM yuanboshe/ros-humble-aicrobo:latest
+FROM ros:jazzy-ros-base
 
-# -----------------------------
-# Install system dependencies
-# -----------------------------
-USER root
-
+# Install essential packages
 RUN apt-get update && apt-get install -y \
     v4l-utils \
     libv4l-dev \
     python3-opencv \
     python3-pip \
+    python3-venv \
     wget \
+    sudo \
+    ros-jazzy-cv-bridge \
+    nano \
+    x11-apps \
     && rm -rf /var/lib/apt/lists/*
 
-# Allow camera access
-RUN usermod -a -G video aicrobo
-
-# -----------------------------
-# Download MediaPipe Model
-# -----------------------------
-RUN wget https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/latest/hand_landmarker.task \
+# Download hand landmarker model
+RUN wget https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task \
     -O /tmp/hand_landmarker.task
 
-USER aicrobo
+# Create a non-root user
+RUN useradd -m -s /bin/bash amir && \
+    echo "amir ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers && \
+    usermod -a -G video,dialout amir
 
-# -----------------------------
-# Workspace Setup
-# -----------------------------
-WORKDIR /home/aicrobo/ros2_ws
+# Set up environment
+ENV ROS_DOMAIN_ID=0
+ENV DISPLAY=:0
+ENV QT_X11_NO_MITSHM=1
 
-# Install Python dependencies
-COPY --chown=aicrobo:aicrobo requirements.txt /tmp/requirements.txt
+# Create workspace
+WORKDIR /workspace
+RUN mkdir -p /workspace/src && \
+    chown -R amir:amir /workspace
 
-RUN if [ -f /tmp/requirements.txt ]; then \
-        pip install --no-cache-dir -r /tmp/requirements.txt; \
-        rm /tmp/requirements.txt; \
-    fi
-RUN pip install mediapipe
-RUN pip install --force-reinstall "numpy==1.24.3"
-# -----------------------------
-# ROS Environment Setup
-# -----------------------------
-RUN echo '' >> ~/.bashrc && \
-    echo '# ROS 2 Workspace Setup' >> ~/.bashrc && \
-    echo 'source /opt/ros/humble/setup.bash' >> ~/.bashrc && \
-    echo 'cd /home/aicrobo/ros2_ws' >> ~/.bashrc && \
-    echo 'if [ -f "install/setup.bash" ]; then' >> ~/.bashrc && \
-    echo '    source install/setup.bash' >> ~/.bashrc && \
-    echo 'fi' >> ~/.bashrc
+# Copy requirements file
+COPY --chown=amir:amir requirements.txt /tmp/requirements.txt
+
+# Switch to non-root user
+USER amir
+
+# Create and activate virtual environment
+RUN python3 -m venv /home/amir/venv
+ENV PATH="/home/amir/venv/bin:$PATH"
+
+# Install Python packages in virtual environment
+RUN pip install --no-cache-dir -r /tmp/requirements.txt && \
+    rm /tmp/requirements.txt
+
+# Setup ROS2 in bashrc with virtual environment
+RUN echo '' >> /home/amir/.bashrc && \
+    echo '# ROS 2 Workspace Setup' >> /home/amir/.bashrc && \
+    echo 'source /opt/ros/jazzy/setup.bash' >> /home/amir/.bashrc && \
+    echo 'source /home/amir/venv/bin/activate' >> /home/amir/.bashrc && \
+    echo 'cd /workspace' >> /home/amir/.bashrc && \
+    echo 'if [ -f "install/setup.bash" ]; then' >> /home/amir/.bashrc && \
+    echo '    source install/setup.bash' >> /home/amir/.bashrc && \
+    echo 'fi' >> /home/amir/.bashrc
+
+WORKDIR /workspace
+
+CMD ["/bin/bash"]
