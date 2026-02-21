@@ -7,7 +7,6 @@ from cv_bridge import CvBridge
 import cv2
 import numpy as np
 import time
-import tkinter as tk
 
 
 class CrossingCounter(Node):
@@ -25,6 +24,8 @@ class CrossingCounter(Node):
         self.declare_parameter('use_horizontal_line', True)  # Use horizontal line instead of vertical
         self.declare_parameter('display_width', 1280)  # Target display width
         self.declare_parameter('display_height', 720)  # Target display height
+        self.declare_parameter('screen_width', 1920)  # Screen width for max window size
+        self.declare_parameter('screen_height', 1080)  # Screen height for max window size
 
         self.line_position = self.get_parameter('line_position').value
         self.threshold = self.get_parameter('threshold').value
@@ -36,6 +37,8 @@ class CrossingCounter(Node):
         self.use_horizontal = self.get_parameter('use_horizontal_line').value
         self.display_width = self.get_parameter('display_width').value
         self.display_height = self.get_parameter('display_height').value
+        self.screen_width = self.get_parameter('screen_width').value
+        self.screen_height = self.get_parameter('screen_height').value
 
         self.bridge = CvBridge()
 
@@ -44,6 +47,14 @@ class CrossingCounter(Node):
             Image,
             'gesture/image_annotated',
             self.image_callback,
+            10
+        )
+
+        # Subscribe to crossing count from phone detector to sync
+        self.crossing_sub = self.create_subscription(
+            Int32,
+            'gesture/crossing_count',
+            self.crossing_count_callback,
             10
         )
 
@@ -72,12 +83,6 @@ class CrossingCounter(Node):
         # Calibration variables
         self.calibration_points = []
         self.calibration_complete = False
-
-        # Get screen size for maximum window size
-        root = tk.Tk()
-        self.screen_width = root.winfo_screenwidth()
-        self.screen_height = root.winfo_screenheight()
-        root.destroy()
 
         # Calculate max window size (90% of screen)
         self.max_width = int(self.screen_width * 0.9)
@@ -110,6 +115,12 @@ class CrossingCounter(Node):
     def cm_to_px(self, cm):
         """Convert centimeters to pixels using calibration"""
         return cm * self.pixels_per_cm
+
+    def crossing_count_callback(self, msg):
+        """Sync crossing count with other nodes"""
+        if msg.data != self.crossing_count:
+            self.crossing_count = msg.data
+            self.get_logger().info(f"🔄 Synced crossing count: {self.crossing_count}")
 
     def mouse_callback(self, event, x, y, flags, param):
         """Mouse callback for calibration mode"""
@@ -199,7 +210,7 @@ class CrossingCounter(Node):
             # Add threshold label
             # cv2.putText(
             #     frame,
-            #     f"±{self.threshold}px ({self.px_to_cm(self.threshold):.1f}cm1)",
+            #     f"±{self.threshold}px ({self.px_to_cm(self.threshold):.1f}cm)",
             #     (30, line_pos + 30),
             #     cv2.FONT_HERSHEY_SIMPLEX,
             #     0.5,
@@ -306,7 +317,7 @@ class CrossingCounter(Node):
         if current_time - self.last_alert_time > self.alert_cooldown:
             self.last_alert_time = current_time
             self.alert_active = True
-            self.alert_message = f"🚨 HAND {hand_id} CROSSED! ({side})"
+            self.alert_message = f"🚨 HAND {self.crossing_count} CROSSED! ({side})"
 
             # Publish alert
             alert_msg = String()
@@ -453,9 +464,13 @@ class CrossingCounter(Node):
                 # Update last side
                 self.last_side[hand_id] = current_side
 
-        # Draw crossing count
-        cv2.putText(frame, f"Crossings: {self.crossing_count}",
-                    (30, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 0), 2)
+        # Draw crossing count (prominently displayed)
+        cv2.putText(frame, f"CROSSINGS: {self.crossing_count}",
+                    (30, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (255, 255, 0), 3)
+
+        # Also draw smaller count at bottom for redundancy
+        cv2.putText(frame, f"Count: {self.crossing_count}",
+                    (30, h - 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
 
         # Draw alert if active
         self.draw_alert(frame)
@@ -521,6 +536,11 @@ class CrossingCounter(Node):
                 self.display_height = max(int(self.display_height * 0.8), 480)
                 cv2.resizeWindow("Crossing Counter", self.display_width, self.display_height)
                 self.get_logger().info(f"Window size: {self.display_width}x{self.display_height}")
+
+            # Reset count with 'r' key
+            elif key == ord('r'):
+                self.crossing_count = 0
+                self.get_logger().info("🔄 Count reset to 0")
 
         except Exception as e:
             self.get_logger().error(f"Error processing image: {e}")

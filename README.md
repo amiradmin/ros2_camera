@@ -76,6 +76,7 @@ cd /workspace && source install/setup.bash && ros2 run camera_node gesture_detec
 docker exec -it ros2_web_dev bash
 ros2 run camera_node crossing_counter --ros-args -p enable_calibration_mode:=true -p reference_object_width_cm:=20.0
 ros2 run camera_node crossing_counter --ros-args -p pixels_per_cm:=20.0
+ros2 run camera_node crossing_counter --ros-args   -p pixels_per_cm:=20.0   -p display_width:=1920   -p display_height:=1080
 
 docker exec -it ros2_web_dev bash
 cd /workspace && source install/setup.bash && ros2 topic echo /gesture/crossing_count
