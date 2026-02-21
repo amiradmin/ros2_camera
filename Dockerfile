@@ -1,7 +1,9 @@
 FROM ros:jazzy-ros-base
 
 # Install essential packages
-RUN apt-get update && apt-get install -y \
+RUN sed -i 's|http://.*archive.ubuntu.com|http://mirror.arvancloud.ir/ubuntu|g' /etc/apt/sources.list && \
+    sed -i 's|http://security.ubuntu.com|http://mirror.arvancloud.ir/ubuntu|g' /etc/apt/sources.list && \
+    apt-get update && apt-get install -y --fix-missing \
     v4l-utils \
     libv4l-dev \
     python3-opencv \

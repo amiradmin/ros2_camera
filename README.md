@@ -61,3 +61,24 @@ cd /workspace && source install/setup.bash && ros2 run camera_node camera_viewer
 ros2 topic echo gesture/number
 
 
+
+
+
+
+
+docker exec -it ros2_web_dev bash
+cd /workspace && source install/setup.bash && ros2 run camera_node camera_publisher
+
+docker exec -it ros2_web_dev bash 
+cd /workspace && source install/setup.bash && ros2 run camera_node gesture_detector
+
+
+docker exec -it ros2_web_dev bash
+cd /workspace && source install/setup.bash && ros2 run camera_node crossing_counter
+
+
+docker exec -it ros2_web_dev bash
+cd /workspace && source install/setup.bash && ros2 topic echo /gesture/crossing_count
+
+
+

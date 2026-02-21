@@ -3,6 +3,10 @@ numpy==1.26.4
 opencv-python==4.8.1.78
 mediapipe==0.10.32
 
+# YOLO for phone detection
+ultralytics==8.3.0
+
+
 # Arduino communication (if needed)
 pyserial
 
